@@ -3,6 +3,7 @@ import { pool, connectToDb } from './db/connection.js';
 import { QueryResult } from 'pg';
 
 await connectToDb();
+startClient();
 
 function startClient(): void{
     inquirer
@@ -97,14 +98,28 @@ function viewAllRoles(): void{
     });
 }
 
-function viewAllEmployees(): void{
-    pool.query('SELECT * FROM employee', (error: Error, result: QueryResult) => {
-        if(error){
-            console.log(error);
+function viewAllEmployees(): void {
+    pool.query(
+        `SELECT 
+            employee.id as ID, 
+            employee.first_name as FirstName, 
+            employee.last_name as LastName, 
+            role.title as JobTitle, 
+            department.name as Dept, 
+            role.salary as Salary, 
+            CONCAT(manager.first_name, ' ', manager.last_name) as Manager
+        FROM employee
+        LEFT JOIN employee as manager ON employee.manager_id = manager.id
+        JOIN role ON employee.role_id = role.id
+        JOIN department ON role.department_id = department.id`, 
+        (error: Error, result: QueryResult) => {
+            if (error) {
+                console.log(error);
+            }
+            console.table(result.rows);
+            startClient();
         }
-        console.table(result.rows);
-        startClient();
-    });
+    );
 }
 
 function addDepartment(): void{
@@ -123,11 +138,10 @@ function addDepartment(): void{
             }
             // Check if the department already exists
             if(result.rows.length === 0 || result.rows.filter((department: any) => department.name === answers.name).length === 0){
-                pool.query('INSERT INTO department (name) VALUES ($1)', [answers.name], (error: Error, result: QueryResult) => {
+                pool.query('INSERT INTO department (name) VALUES ($1)', [answers.name], (error: Error, _result: QueryResult) => {
                     if(error){
                         console.log(error);
                     }
-                    console.table(result.rows);
                     console.log('Department added successfully.');
                     startClient();
                 });
@@ -167,11 +181,10 @@ function addRole(): void{
         ])
         .then((answers) => {
             const departmentId = result.rows.filter((department: any) => department.name === answers.department)[0].id;
-            pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [answers.title, answers.salary, departmentId], (error: Error, result: QueryResult) => {
+            pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [answers.title, answers.salary, departmentId], (error: Error, _result: QueryResult) => {
                 if(error){
                     console.log(error);
                 }
-                console.table(result.rows);
                 console.log('Role added successfully.');
                 startClient();
             });
@@ -220,11 +233,10 @@ function addEmployee(): void{
                 ])
                 .then((answers2) => {
                     const managerId = result.rows.filter((employee: any) => `${employee.first_name} ${employee.last_name}` === answers2.manager)[0].id;
-                    pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', [answers.firstName, answers.lastName, roleId, managerId], (error: Error, result: QueryResult) => {
+                    pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', [answers.firstName, answers.lastName, roleId, managerId], (error: Error, _result: QueryResult) => {
                         if(error){
                             console.log(error);
                         }
-                        console.table(result.rows);
                         console.log('Employee added successfully.');
                         startClient();
                     });
@@ -265,11 +277,10 @@ function updateEmployeeRole(): void{
                 ])
                 .then((answers2) => {
                     const roleId = result.rows.filter((role: any) => role.title === answers2.role)[0].id;
-                    pool.query('UPDATE employee SET role_id = $1 WHERE id = $2', [roleId, employeeId], (error: Error, result: QueryResult) => {
+                    pool.query('UPDATE employee SET role_id = $1 WHERE id = $2', [roleId, employeeId], (error: Error, _result: QueryResult) => {
                         if(error){
                             console.log(error);
                         }
-                        console.table(result.rows);
                         console.log('Employee role updated successfully.');
                         startClient();
                     });
@@ -310,11 +321,10 @@ function updateEmployeeManager(): void{
                 ])
                 .then((answers2) => {
                     const managerId = result.rows.filter((employee: any) => `${employee.first_name} ${employee.last_name}` === answers2.manager)[0].id;
-                    pool.query('UPDATE employee SET manager_id = $1 WHERE id = $2', [managerId, employeeId], (error: Error, result: QueryResult) => {
+                    pool.query('UPDATE employee SET manager_id = $1 WHERE id = $2', [managerId, employeeId], (error: Error, _result: QueryResult) => {
                         if(error){
                             console.log(error);
                         }
-                        console.table(result.rows);
                         console.log('Employee manager updated successfully.');
                         startClient();
                     });

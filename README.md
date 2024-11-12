@@ -49,8 +49,6 @@ npm run start
 - Update existing employee roles.
 - View employees by manager or department.
 
-3. Example screenshot of the interface:
-
 ## License
 
 This project is licensed under the [MIT](https://opensource.org/licenses/MIT) license.<BR>

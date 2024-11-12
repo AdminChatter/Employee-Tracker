@@ -6,6 +6,13 @@ await connectToDb();
 startClient();
 
 function startClient(): void{
+    console.log(`
+        -------------------------
+        |                       |
+        |   Employee Manager    |
+        |                       |
+        -------------------------
+        `);
     inquirer
     .prompt([
         {
